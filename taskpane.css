@@ -238,6 +238,12 @@ body {
 .field-input:focus { border-color: var(--green-500); background: #fff; box-shadow: var(--shadow-focus); }
 .field-input::placeholder { color: var(--gray-400); }
 
+.field-hint {
+  font-size: .72rem;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
 /* ─── Buttons ───────────────────────────────────────────── */
 .btn {
   display: flex; align-items: center; justify-content: center; gap: 6px;
