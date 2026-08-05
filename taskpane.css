@@ -1,5 +1,5 @@
 /* ============================================================
-   Cell Protector — Taskpane Styles  v1.1.0
+   Cell Protector — Taskpane Styles  v1.2.0
    ============================================================ */
 
 :root {
@@ -19,7 +19,6 @@
   --gray-600: #4b5563;
   --gray-700: #374151;
   --gray-800: #1f2937;
-  --gray-900: #111827;
 
   --red-50:   #fef2f2;
   --red-200:  #fecaca;
@@ -28,10 +27,12 @@
 
   --amber-50:  #fffbeb;
   --amber-200: #fde68a;
+  --blue-50:   #eff6ff;
+  --blue-200:  #bfdbfe;
+  --blue-700:  #1d4ed8;
 
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 14px;
   --radius-xl: 18px;
 
   --shadow-sm:    0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
@@ -41,7 +42,6 @@
   --t: 0.16s ease;
 }
 
-/* ─── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 14px; }
 body {
@@ -55,46 +55,31 @@ body {
 
 /* ─── App shell ─────────────────────────────────────────── */
 .app {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  max-width: 360px;
-  margin: 0 auto;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 12px; max-width: 360px; margin: 0 auto;
 }
 
 /* ─── Header ────────────────────────────────────────────── */
 .header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: 14px 16px;
   background: linear-gradient(135deg, var(--green-600) 0%, var(--green-700) 100%);
-  border-radius: var(--radius-xl);
-  color: #fff;
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-xl); color: #fff; box-shadow: var(--shadow-md);
 }
 .header-icon {
   display: flex; align-items: center; justify-content: center;
   width: 42px; height: 42px;
-  background: rgba(255,255,255,.18);
-  border-radius: var(--radius-md);
-  flex-shrink: 0;
+  background: rgba(255,255,255,.18); border-radius: var(--radius-md); flex-shrink: 0;
 }
-.header-title   { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
-.header-subtitle{ font-size: .73rem; opacity: .8; margin-top: 1px; }
+.header-title    { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.header-subtitle { font-size: .73rem; opacity: .8; margin-top: 1px; }
 
 /* ─── Status Banner ─────────────────────────────────────── */
 .status-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  font-size: .82rem;
-  font-weight: 500;
-  animation: slideDown .2s ease;
-  line-height: 1.45;
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 14px; border-radius: var(--radius-md);
+  font-size: .82rem; font-weight: 500;
+  animation: slideDown .2s ease; line-height: 1.45;
 }
 .status-banner.success { background: var(--green-50);  color: var(--green-700); border: 1px solid var(--green-200); }
 .status-banner.error   { background: var(--red-50);    color: var(--red-600);   border: 1px solid var(--red-200);   }
@@ -103,14 +88,10 @@ body {
 
 /* ─── Cards ─────────────────────────────────────────────── */
 .card {
-  background: #fff;
-  border-radius: var(--radius-xl);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
+  background: #fff; border-radius: var(--radius-xl);
+  padding: 16px; box-shadow: var(--shadow-sm);
   border: 1px solid var(--gray-200);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: flex; flex-direction: column; gap: 14px;
   transition: box-shadow var(--t);
 }
 .card:hover { box-shadow: var(--shadow-md); }
@@ -120,130 +101,108 @@ body {
   font-size: .88rem; font-weight: 700; color: var(--gray-800); letter-spacing: -.01em;
 }
 .card-title svg { color: var(--green-600); flex-shrink: 0; }
-
 .card-desc { font-size: .79rem; color: var(--gray-500); line-height: 1.55; margin-top: -6px; }
+.divider   { height: 1px; background: var(--gray-100); margin: 0 -4px; }
 
-.divider { height: 1px; background: var(--gray-100); margin: 0 -4px; }
+/* ─── Mode tabs ─────────────────────────────────────────── */
+.mode-tabs {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.mode-tab {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 10px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: .81rem; font-weight: 600; color: var(--gray-600);
+  cursor: pointer; user-select: none;
+  transition: border-color var(--t), background var(--t), color var(--t);
+}
+.mode-tab input[type="radio"] { display: none; }
+.mode-tab:hover { border-color: var(--green-400); color: var(--green-700); background: var(--green-50); }
+.mode-tab.active {
+  border-color: var(--green-500);
+  background: var(--green-50);
+  color: var(--green-700);
+  box-shadow: 0 0 0 1px var(--green-200);
+}
 
 /* ─── Steps ─────────────────────────────────────────────── */
-.step {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.step { display: flex; flex-direction: column; gap: 8px; }
 .step-label {
-  font-size: .75rem;
-  font-weight: 600;
-  color: var(--gray-500);
-  text-transform: uppercase;
-  letter-spacing: .04em;
+  font-size: .72rem; font-weight: 600; color: var(--gray-500);
+  text-transform: uppercase; letter-spacing: .04em;
 }
+
+/* ─── Formula info box ──────────────────────────────────── */
+.formula-info {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 11px 13px;
+  background: var(--blue-50);
+  border: 1px solid var(--blue-200);
+  border-radius: var(--radius-md);
+  font-size: .81rem; color: var(--blue-700); line-height: 1.5;
+}
+.formula-info svg { flex-shrink: 0; margin-top: 1px; color: var(--blue-700); }
 
 /* ─── Range list ─────────────────────────────────────────── */
 .range-list-wrap {
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  background: var(--gray-50); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md); overflow: hidden;
   animation: fadeIn .18s ease;
 }
-
 .range-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px 6px;
-  border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px 6px; border-bottom: 1px solid var(--gray-200);
 }
 .range-list-title {
-  font-size: .75rem;
-  font-weight: 700;
-  color: var(--gray-600);
-  text-transform: uppercase;
-  letter-spacing: .04em;
+  font-size: .72rem; font-weight: 700; color: var(--gray-600);
+  text-transform: uppercase; letter-spacing: .04em;
 }
-
 .btn-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: .75rem;
-  font-weight: 500;
-  color: var(--red-500);
-  cursor: pointer;
-  font-family: inherit;
-  transition: color var(--t);
+  background: none; border: none; padding: 0;
+  font-size: .75rem; font-weight: 500; color: var(--red-500);
+  cursor: pointer; font-family: inherit; transition: color var(--t);
 }
 .btn-link:hover { color: var(--red-600); }
 
-.range-list {
-  list-style: none;
-  max-height: 160px;
-  overflow-y: auto;
-}
-
+.range-list { list-style: none; max-height: 150px; overflow-y: auto; }
 .range-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; border-bottom: 1px solid var(--gray-100);
   animation: fadeIn .15s ease;
 }
 .range-item:last-child { border-bottom: none; }
 
 .range-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: .82rem;
-  font-weight: 600;
-  color: var(--green-700);
-  background: var(--green-50);
-  border: 1px solid var(--green-200);
-  border-radius: var(--radius-sm);
-  padding: 2px 8px;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .81rem; font-weight: 600; color: var(--green-700);
+  background: var(--green-50); border: 1px solid var(--green-200);
+  border-radius: var(--radius-sm); padding: 2px 8px;
 }
-.range-badge svg { opacity: .7; }
-
 .range-remove {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--gray-400);
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: 4px;
-  transition: color var(--t), background var(--t);
+  background: none; border: none; cursor: pointer; color: var(--gray-400);
+  display: flex; align-items: center; padding: 2px;
+  border-radius: 4px; transition: color var(--t), background var(--t);
 }
 .range-remove:hover { color: var(--red-500); background: var(--red-50); }
 
 /* ─── Empty hint ─────────────────────────────────────────── */
 .empty-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 18px 12px;
-  color: var(--gray-400);
-  text-align: center;
-  font-size: .8rem;
-  line-height: 1.5;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 12px; color: var(--gray-400); text-align: center;
+  font-size: .8rem; line-height: 1.5;
 }
 .empty-hint svg { opacity: .35; }
 .empty-hint b { color: var(--gray-600); }
 
-/* ─── Toggle switch ─────────────────────────────────────── */
+/* ─── Toggle ────────────────────────────────────────────── */
 .toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  cursor: pointer;
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; cursor: pointer;
 }
-.toggle-info { flex: 1; }
-.toggle-title { display: block; font-size: .84rem; font-weight: 600; color: var(--gray-800); }
+.toggle-title { font-size: .84rem; font-weight: 600; color: var(--gray-800); }
 
 .toggle-switch {
   position: relative; display: inline-block;
@@ -252,19 +211,13 @@ body {
 .toggle-switch input { display: none; }
 .toggle-slider {
   position: absolute; inset: 0;
-  background: var(--gray-200);
-  border-radius: 999px;
-  transition: background var(--t);
+  background: var(--gray-200); border-radius: 999px; transition: background var(--t);
 }
 .toggle-slider::before {
-  content: "";
-  position: absolute;
-  width: 18px; height: 18px;
-  left: 3px; top: 3px;
-  background: #fff;
-  border-radius: 50%;
-  transition: transform var(--t);
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  content: ""; position: absolute;
+  width: 18px; height: 18px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%;
+  transition: transform var(--t); box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
 .toggle-switch input:checked + .toggle-slider { background: var(--green-500); }
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
@@ -273,61 +226,45 @@ body {
 .password-section { display: flex; flex-direction: column; gap: 10px; animation: fadeIn .2s ease; }
 .field-group      { display: flex; flex-direction: column; gap: 5px; }
 .field-label      { font-size: .77rem; font-weight: 600; color: var(--gray-600); letter-spacing: .01em; }
-
-.input-wrapper { position: relative; display: flex; align-items: center; }
-.input-icon    { position: absolute; left: 10px; color: var(--gray-400); pointer-events: none; }
-
+.input-wrapper    { position: relative; display: flex; align-items: center; }
+.input-icon       { position: absolute; left: 10px; color: var(--gray-400); pointer-events: none; }
 .field-input {
-  width: 100%;
-  padding: 8px 10px 8px 30px;
-  border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  font-size: .84rem;
-  color: var(--gray-800);
-  background: var(--gray-50);
-  outline: none;
+  width: 100%; padding: 8px 10px 8px 30px;
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+  font-size: .84rem; color: var(--gray-800); background: var(--gray-50);
+  outline: none; font-family: inherit;
   transition: border-color var(--t), box-shadow var(--t), background var(--t);
-  font-family: inherit;
 }
 .field-input:focus { border-color: var(--green-500); background: #fff; box-shadow: var(--shadow-focus); }
 .field-input::placeholder { color: var(--gray-400); }
 
 /* ─── Buttons ───────────────────────────────────────────── */
 .btn {
-  display: flex; align-items: center; justify-content: center;
-  gap: 6px; width: 100%;
-  padding: 10px 16px;
-  border: none; border-radius: var(--radius-md);
-  font-family: inherit; font-size: .875rem; font-weight: 600;
-  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 10px 16px; border: none; border-radius: var(--radius-md);
+  font-family: inherit; font-size: .875rem; font-weight: 600; cursor: pointer;
   transition: background var(--t), transform var(--t), box-shadow var(--t), opacity var(--t);
   letter-spacing: .01em;
 }
 .btn:active:not(:disabled) { transform: scale(.98); }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
 .btn.loading svg { animation: spin .7s linear infinite; }
-
 .btn-sm { padding: 8px 12px; font-size: .82rem; }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--green-500) 0%, var(--green-600) 100%);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(22,163,74,.28);
+  color: #fff; box-shadow: 0 2px 8px rgba(22,163,74,.28);
 }
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--green-600) 0%, var(--green-700) 100%);
   box-shadow: 0 4px 14px rgba(22,163,74,.38);
 }
-
 .btn-secondary {
-  background: var(--green-50); color: var(--green-700);
-  border: 1.5px solid var(--green-200);
+  background: var(--green-50); color: var(--green-700); border: 1.5px solid var(--green-200);
 }
 .btn-secondary:hover:not(:disabled) { background: var(--green-100); border-color: var(--green-400); }
-
 .btn-outline {
-  background: #fff; color: var(--gray-700);
-  border: 1.5px solid var(--gray-200);
+  background: #fff; color: var(--gray-700); border: 1.5px solid var(--gray-200);
 }
 .btn-outline:hover:not(:disabled) { border-color: var(--green-400); color: var(--green-700); background: var(--green-50); }
 
@@ -337,7 +274,6 @@ body {
 /* ─── Utilities ─────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-/* ─── Animations ─────────────────────────────────────────── */
-@keyframes fadeIn   { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideDown{ from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes spin     { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes fadeIn    { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin      { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
