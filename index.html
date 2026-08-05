@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cell Protector</title>
+
+  <!-- Office.js -->
+  <script
+    type="text/javascript"
+    src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"
+  ></script>
+
+  <link rel="stylesheet" href="taskpane.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="header-title">Cell Protector</h1>
+        <p class="header-subtitle">Protect what matters</p>
+      </div>
+    </header>
+
+    <!-- Status Banner -->
+    <div id="statusBanner" class="status-banner hidden" role="alert" aria-live="polite">
+      <span id="statusIcon" class="status-icon"></span>
+      <span id="statusText"></span>
+    </div>
+
+    <!-- ==================== PROTECT CARD ==================== -->
+    <section class="card" id="protectCard">
+      <h2 class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Protection Mode
+      </h2>
+
+      <!-- Radio group -->
+      <div class="radio-group" role="radiogroup" aria-label="Protection mode">
+        <label class="radio-option" id="optLockRange">
+          <input type="radio" name="protectionMode" value="range" checked />
+          <span class="radio-custom"></span>
+          <div class="radio-label">
+            <span class="radio-title">Lock Selected Range</span>
+            <span class="radio-desc">Locks only the cells you have selected</span>
+          </div>
+        </label>
+        <label class="radio-option" id="optLockFormulas">
+          <input type="radio" name="protectionMode" value="formulas" />
+          <span class="radio-custom"></span>
+          <div class="radio-label">
+            <span class="radio-title">Lock All Formula Cells</span>
+            <span class="radio-desc">Auto-detects and locks every formula cell</span>
+          </div>
+        </label>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Password toggle -->
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <span class="toggle-title">Enable Password Protection</span>
+          <span class="toggle-desc">Require a password to unprotect</span>
+        </div>
+        <label class="toggle-switch" aria-label="Enable password protection">
+          <input type="checkbox" id="passwordToggle" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <!-- Password fields (hidden by default) -->
+      <div id="passwordSection" class="password-section hidden">
+        <div class="field-group">
+          <label class="field-label" for="passwordInput">Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="passwordInput" class="field-input" placeholder="Enter password" autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="confirmPasswordInput">Confirm Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="confirmPasswordInput" class="field-input" placeholder="Confirm password" autocomplete="new-password" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Highlight checkbox -->
+      <label class="checkbox-option" id="highlightOption">
+        <input type="checkbox" id="highlightCheckbox" />
+        <span class="checkbox-custom">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="2,6 5,9 10,3"/>
+          </svg>
+        </span>
+        <div class="checkbox-label">
+          <span class="checkbox-title">Highlight Editable Cells</span>
+          <span class="checkbox-desc">Apply a light green fill to unlocked cells before protecting. Colors are restored on unprotect.</span>
+        </div>
+      </label>
+
+      <!-- Protect button -->
+      <button id="protectBtn" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Protect Cells
+      </button>
+    </section>
+
+    <!-- ==================== UNPROTECT CARD ==================== -->
+    <section class="card" id="unprotectCard">
+      <h2 class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+        </svg>
+        Remove Protection
+      </h2>
+      <p class="card-desc">Detects if the active worksheet is protected and removes it — restoring any highlighted cell colors.</p>
+
+      <!-- Unprotect password field (shown conditionally) -->
+      <div id="unprotectPasswordSection" class="password-section hidden">
+        <div class="field-group">
+          <label class="field-label" for="unprotectPasswordInput">Sheet Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="unprotectPasswordInput" class="field-input" placeholder="Enter sheet password" autocomplete="current-password" />
+          </div>
+        </div>
+        <button id="unprotectConfirmBtn" class="btn btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20,6 9,17 4,12"/>
+          </svg>
+          Confirm &amp; Unprotect
+        </button>
+      </div>
+
+      <button id="detectProtectBtn" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Detect &amp; Remove Protection
+      </button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Cell Protector &nbsp;·&nbsp; v1.0.0
+    </footer>
+  </div>
+
+  <script src="taskpane.js"></script>
+</body>
+</html>
