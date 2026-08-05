@@ -1,13 +1,13 @@
 /* ============================================================
-   Cell Protector — Taskpane Logic  v1.1.0
-   Multi-range capture → lock on demand
+   Cell Protector — Taskpane Logic  v1.2.0
+   Modes: selected ranges (multi-capture) | all formula cells
    ============================================================ */
 
 "use strict";
 
 /* ─── State ─────────────────────────────────────────────── */
-// Array of address strings the user has captured, e.g. ["Sheet1!A1:B5", "Sheet1!D3"]
-let capturedRanges = [];
+let capturedRanges = []; // used in "range" mode
+let currentMode    = "range"; // "range" | "formulas"
 
 /* ─── DOM refs ──────────────────────────────────────────── */
 let els = {};
@@ -18,27 +18,40 @@ let els = {};
 Office.onReady(() => {
   cacheElements();
   bindEvents();
+  syncModeUI(); // set initial state
 });
 
 function cacheElements() {
   els = {
-    // Protect card
+    // Mode tabs
+    tabRange:             document.getElementById("tabRange"),
+    tabFormulas:          document.getElementById("tabFormulas"),
+    radioRange:           document.querySelector('input[name="mode"][value="range"]'),
+    radioFormulas:        document.querySelector('input[name="mode"][value="formulas"]'),
+    panelRange:           document.getElementById("panelRange"),
+    panelFormulas:        document.getElementById("panelFormulas"),
+
+    // Range panel
     addRangeBtn:          document.getElementById("addRangeBtn"),
     rangeListWrap:        document.getElementById("rangeListWrap"),
     rangeList:            document.getElementById("rangeList"),
     emptyHint:            document.getElementById("emptyHint"),
     clearAllBtn:          document.getElementById("clearAllBtn"),
+
+    // Password
     passwordToggle:       document.getElementById("passwordToggle"),
     passwordSection:      document.getElementById("passwordSection"),
     passwordInput:        document.getElementById("passwordInput"),
     confirmPasswordInput: document.getElementById("confirmPasswordInput"),
+
+    // Lock
     lockBtn:              document.getElementById("lockBtn"),
 
-    // Unprotect card
-    detectProtectBtn:          document.getElementById("detectProtectBtn"),
-    unprotectPasswordSection:  document.getElementById("unprotectPasswordSection"),
-    unprotectPasswordInput:    document.getElementById("unprotectPasswordInput"),
-    unprotectConfirmBtn:       document.getElementById("unprotectConfirmBtn"),
+    // Unprotect
+    detectProtectBtn:         document.getElementById("detectProtectBtn"),
+    unprotectPasswordSection: document.getElementById("unprotectPasswordSection"),
+    unprotectPasswordInput:   document.getElementById("unprotectPasswordInput"),
+    unprotectConfirmBtn:      document.getElementById("unprotectConfirmBtn"),
 
     // Status
     statusBanner: document.getElementById("statusBanner"),
@@ -48,19 +61,28 @@ function cacheElements() {
 }
 
 function bindEvents() {
+  // Mode tabs
+  els.tabRange.addEventListener("click",    () => setMode("range"));
+  els.tabFormulas.addEventListener("click", () => setMode("formulas"));
+
+  // Range panel
   els.addRangeBtn.addEventListener("click", handleAddRange);
   els.clearAllBtn.addEventListener("click", clearAllRanges);
-  els.lockBtn.addEventListener("click", handleLock);
 
+  // Password toggle
   els.passwordToggle.addEventListener("change", () => {
     toggleEl(els.passwordSection, els.passwordToggle.checked);
     if (!els.passwordToggle.checked) {
-      els.passwordInput.value = "";
+      els.passwordInput.value        = "";
       els.confirmPasswordInput.value = "";
     }
   });
 
-  els.detectProtectBtn.addEventListener("click", handleDetect);
+  // Lock
+  els.lockBtn.addEventListener("click", handleLock);
+
+  // Unprotect
+  els.detectProtectBtn.addEventListener("click",   handleDetect);
   els.unprotectConfirmBtn.addEventListener("click", handleUnprotectWithPassword);
   els.unprotectPasswordInput.addEventListener("keydown", e => {
     if (e.key === "Enter") handleUnprotectWithPassword();
@@ -68,13 +90,41 @@ function bindEvents() {
 }
 
 /* ============================================================
-   Range Capture
+   Mode switching
    ============================================================ */
 
-/**
- * Read the current selection from Excel and add its address
- * to the captured list (deduplicated).
- */
+function setMode(mode) {
+  currentMode = mode;
+  clearStatus();
+  syncModeUI();
+}
+
+function syncModeUI() {
+  const isRange    = currentMode === "range";
+  const isFormulas = currentMode === "formulas";
+
+  // Tab active states
+  els.tabRange.classList.toggle("active", isRange);
+  els.tabFormulas.classList.toggle("active", isFormulas);
+
+  // Panels
+  toggleEl(els.panelRange,    isRange);
+  toggleEl(els.panelFormulas, isFormulas);
+
+  // Lock button: always enabled in formula mode; in range mode only if list has items
+  els.lockBtn.disabled = isRange ? capturedRanges.length === 0 : false;
+
+  // Button label
+  els.lockBtn.querySelector("span, svg + *") ; // keep icon
+  // Update text node (last child of button)
+  const textNode = [...els.lockBtn.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+  if (textNode) textNode.textContent = isFormulas ? " Lock Formula Cells" : " Lock Ranges";
+}
+
+/* ============================================================
+   Range Capture (range mode only)
+   ============================================================ */
+
 async function handleAddRange() {
   clearStatus();
   setButtonLoading(els.addRangeBtn, true);
@@ -82,7 +132,7 @@ async function handleAddRange() {
   try {
     await Excel.run(async context => {
       const selection = context.workbook.getSelectedRange();
-      selection.load(["address", "rowCount", "columnCount"]);
+      selection.load(["address"]);
       await context.sync();
 
       if (!selection.address) {
@@ -90,7 +140,6 @@ async function handleAddRange() {
         return;
       }
 
-      // Normalise address (strip leading sheet name duplicate, upper-case)
       const addr = selection.address.toUpperCase();
 
       if (capturedRanges.includes(addr)) {
@@ -109,36 +158,25 @@ async function handleAddRange() {
   }
 }
 
-/**
- * Remove a single range from the list by index.
- */
 function removeRange(index) {
   capturedRanges.splice(index, 1);
   renderRangeList();
   clearStatus();
 }
 
-/**
- * Remove all captured ranges.
- */
 function clearAllRanges() {
   capturedRanges = [];
   renderRangeList();
   clearStatus();
 }
 
-/**
- * Re-render the captured ranges list and toggle the empty hint.
- */
 function renderRangeList() {
-  const hasList = capturedRanges.length > 0;
-
-  toggleEl(els.rangeListWrap, hasList);
-  toggleEl(els.emptyHint,     !hasList);
-  els.lockBtn.disabled = !hasList;
+  const has = capturedRanges.length > 0;
+  toggleEl(els.rangeListWrap, has);
+  toggleEl(els.emptyHint,     !has);
+  if (currentMode === "range") els.lockBtn.disabled = !has;
 
   els.rangeList.innerHTML = "";
-
   capturedRanges.forEach((addr, i) => {
     const li = document.createElement("li");
     li.className = "range-item";
@@ -150,7 +188,7 @@ function renderRangeList() {
         </svg>
         ${addr}
       </span>
-      <button class="range-remove" aria-label="Remove ${addr}" title="Remove">
+      <button class="range-remove" aria-label="Remove ${addr}">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
@@ -164,23 +202,15 @@ function renderRangeList() {
    Lock Flow
    ============================================================ */
 
-/**
- * Validate password inputs then lock all captured ranges on the
- * active worksheet.
- */
 async function handleLock() {
   clearStatus();
 
-  if (capturedRanges.length === 0) {
-    showStatus("error", "⚠", "Add at least one range before locking.");
-    return;
-  }
-
+  // Validate password
   const usePassword = els.passwordToggle.checked;
   if (usePassword) {
     const pw  = els.passwordInput.value;
     const cpw = els.confirmPasswordInput.value;
-    if (!pw)       return showStatus("error", "⚠", "Please enter a password.");
+    if (!pw)        return showStatus("error", "⚠", "Please enter a password.");
     if (pw !== cpw) return showStatus("error", "✕", "Passwords do not match.");
   }
 
@@ -188,54 +218,102 @@ async function handleLock() {
   setButtonLoading(els.lockBtn, true);
 
   try {
-    await Excel.run(async context => {
-      const sheet = context.workbook.worksheets.getActiveWorksheet();
-      sheet.load("protection/protected");
-      await context.sync();
-
-      if (sheet.protection.protected) {
-        showStatus("warning", "⚠", "This sheet is already protected. Remove protection first.");
-        return;
-      }
-
-      // 1. Unlock every cell in the used range
-      const usedRange = sheet.getUsedRange(true);
-      usedRange.format.protection.locked = false;
-
-      // 2. Lock only the captured ranges
-      for (const addr of capturedRanges) {
-        try {
-          // Strip the sheet-name prefix if present (e.g. "Sheet1!A1:B5" → "A1:B5")
-          const localAddr = addr.includes("!") ? addr.split("!").slice(1).join("!") : addr;
-          const range = sheet.getRange(localAddr);
-          range.format.protection.locked = true;
-        } catch (_) {
-          // Invalid address for this sheet — skip silently
-        }
-      }
-
-      // 3. Protect the sheet
-      sheet.protection.protect(buildProtectionOptions(password));
-
-      await context.sync();
-
-      // Build friendly summary
-      const rangesSummary = capturedRanges.join(", ");
-      showStatus(
-        "success",
-        "✓",
-        `Locked and protected: ${rangesSummary}`
-      );
-
-      // Reset captured list after successful lock
-      capturedRanges = [];
-      renderRangeList();
-    });
+    if (currentMode === "range") {
+      await lockRanges(password);
+    } else {
+      await lockFormulas(password);
+    }
   } catch (err) {
     handleError(err, "lock");
   } finally {
     setButtonLoading(els.lockBtn, false);
+    // Re-enable lock btn for formulas mode (disabled during loading)
+    if (currentMode === "formulas") els.lockBtn.disabled = false;
   }
+}
+
+/**
+ * Lock every captured range; unlock everything else.
+ */
+async function lockRanges(password) {
+  if (capturedRanges.length === 0) {
+    showStatus("error", "⚠", "Add at least one range before locking.");
+    return;
+  }
+
+  await Excel.run(async context => {
+    const sheet = context.workbook.worksheets.getActiveWorksheet();
+    sheet.load("protection/protected");
+    await context.sync();
+
+    if (sheet.protection.protected) {
+      showStatus("warning", "⚠", "This sheet is already protected. Remove protection first.");
+      return;
+    }
+
+    // Unlock everything
+    sheet.getUsedRange(true).format.protection.locked = false;
+
+    // Lock each captured range
+    for (const addr of capturedRanges) {
+      try {
+        const localAddr = addr.includes("!") ? addr.split("!").slice(1).join("!") : addr;
+        sheet.getRange(localAddr).format.protection.locked = true;
+      } catch (_) { /* skip invalid addresses */ }
+    }
+
+    sheet.protection.protect(buildProtectionOptions(password));
+    await context.sync();
+
+    const summary = capturedRanges.join(", ");
+    showStatus("success", "✓", `Locked and protected: ${summary}`);
+
+    capturedRanges = [];
+    renderRangeList();
+  });
+}
+
+/**
+ * Auto-detect all formula cells; lock them; unlock everything else.
+ */
+async function lockFormulas(password) {
+  await Excel.run(async context => {
+    const sheet = context.workbook.worksheets.getActiveWorksheet();
+    sheet.load("protection/protected");
+    await context.sync();
+
+    if (sheet.protection.protected) {
+      showStatus("warning", "⚠", "This sheet is already protected. Remove protection first.");
+      return;
+    }
+
+    // Unlock everything
+    const usedRange = sheet.getUsedRange(true);
+    usedRange.format.protection.locked = false;
+    await context.sync();
+
+    // Find formula cells
+    let formulaRange;
+    try {
+      formulaRange = usedRange.getSpecialCells(Excel.SpecialCellType.formulas);
+      formulaRange.load("cellCount");
+      await context.sync();
+    } catch (_) {
+      showStatus("warning", "⚠", "No formulas were found on this worksheet.");
+      return;
+    }
+
+    if (!formulaRange || formulaRange.cellCount === 0) {
+      showStatus("warning", "⚠", "No formulas were found on this worksheet.");
+      return;
+    }
+
+    formulaRange.format.protection.locked = true;
+    sheet.protection.protect(buildProtectionOptions(password));
+    await context.sync();
+
+    showStatus("success", "✓", `Formula cells locked and sheet protected. (${formulaRange.cellCount} formula cell${formulaRange.cellCount !== 1 ? "s" : ""} locked)`);
+  });
 }
 
 /* ============================================================
@@ -258,13 +336,11 @@ async function handleDetect() {
         return;
       }
 
-      // Try without a password first
       try {
         sheet.protection.unprotect();
         await context.sync();
         showStatus("success", "✓", "Worksheet unprotected successfully.");
       } catch (_) {
-        // Password required
         toggleEl(els.unprotectPasswordSection, true);
         showStatus("warning", "🔑", "This sheet is password-protected. Enter the password below.");
       }
@@ -286,8 +362,6 @@ async function handleUnprotectWithPassword() {
   try {
     await Excel.run(async context => {
       const sheet = context.workbook.worksheets.getActiveWorksheet();
-      sheet.load("protection/protected");
-      await context.sync();
 
       try {
         sheet.protection.unprotect(password);
@@ -314,25 +388,16 @@ async function handleUnprotectWithPassword() {
 
 function buildProtectionOptions(password) {
   const opts = {
-    allowFormatCells:      false,
-    allowFormatColumns:    false,
-    allowFormatRows:       false,
-    allowInsertColumns:    false,
-    allowInsertRows:       false,
-    allowInsertHyperlinks: false,
-    allowDeleteColumns:    false,
-    allowDeleteRows:       false,
-    allowSort:             false,
-    allowAutoFilter:       false,
-    allowPivotTables:      false,
+    allowFormatCells: false, allowFormatColumns: false, allowFormatRows: false,
+    allowInsertColumns: false, allowInsertRows: false, allowInsertHyperlinks: false,
+    allowDeleteColumns: false, allowDeleteRows: false,
+    allowSort: false, allowAutoFilter: false, allowPivotTables: false,
   };
   if (password) opts.password = password;
   return opts;
 }
 
-function toggleEl(el, visible) {
-  el.classList.toggle("hidden", !visible);
-}
+function toggleEl(el, visible) { el.classList.toggle("hidden", !visible); }
 
 function showStatus(type, icon, message) {
   els.statusBanner.className = `status-banner ${type}`;
@@ -342,12 +407,10 @@ function showStatus(type, icon, message) {
   if (type === "success") setTimeout(clearStatus, 6000);
 }
 
-function clearStatus() {
-  els.statusBanner.classList.add("hidden");
-}
+function clearStatus() { els.statusBanner.classList.add("hidden"); }
 
 function setButtonLoading(btn, loading) {
-  btn.disabled = loading || (btn === els.lockBtn && capturedRanges.length === 0);
+  btn.disabled = loading;
   btn.classList.toggle("loading", loading);
 }
 
@@ -361,8 +424,6 @@ function handleError(err, operation) {
       case "ItemNotFound":     msg = "Could not find the range. Please re-select and try again."; break;
       default:                 msg = err.message || msg;
     }
-  } else if (err?.message) {
-    msg = err.message;
-  }
+  } else if (err?.message) { msg = err.message; }
   showStatus("error", "✕", msg);
 }
