@@ -320,6 +320,14 @@ async function lockFormulas(password) {
    Unprotect Flow
    ============================================================ */
 
+/**
+ * Step 1 — Detect protection status.
+ * Always show the password prompt after detection so the user must
+ * explicitly supply (or confirm absence of) a password. This ensures
+ * the password stored in the workbook is enforced even when the file
+ * is shared or emailed, because we never attempt a silent no-password
+ * unprotect on the owner's behalf.
+ */
 async function handleDetect() {
   clearStatus();
   toggleEl(els.unprotectPasswordSection, false);
@@ -336,14 +344,11 @@ async function handleDetect() {
         return;
       }
 
-      try {
-        sheet.protection.unprotect();
-        await context.sync();
-        showStatus("success", "✓", "Worksheet unprotected successfully.");
-      } catch (_) {
-        toggleEl(els.unprotectPasswordSection, true);
-        showStatus("warning", "🔑", "This sheet is password-protected. Enter the password below.");
-      }
+      // Sheet IS protected — always ask for password so it is enforced
+      // regardless of who owns the file or how it was shared.
+      toggleEl(els.unprotectPasswordSection, true);
+      els.unprotectPasswordInput.focus();
+      showStatus("warning", "🔑", "Sheet is protected. Enter the password to unprotect (leave blank if none was set).");
     });
   } catch (err) {
     handleError(err, "detect");
@@ -352,22 +357,38 @@ async function handleDetect() {
   }
 }
 
+/**
+ * Step 2 — Attempt unprotect with whatever the user typed.
+ * If a password was set in the workbook, Excel will reject a wrong or
+ * missing password. If no password was set, an empty string works fine.
+ */
 async function handleUnprotectWithPassword() {
-  const password = els.unprotectPasswordInput.value;
-  if (!password) return showStatus("error", "⚠", "Please enter the sheet password.");
-
   clearStatus();
   setButtonLoading(els.unprotectConfirmBtn, true);
+
+  // Use empty string if user left the field blank (no-password sheets)
+  const password = els.unprotectPasswordInput.value;
 
   try {
     await Excel.run(async context => {
       const sheet = context.workbook.worksheets.getActiveWorksheet();
+      sheet.load("protection/protected");
+      await context.sync();
+
+      if (!sheet.protection.protected) {
+        showStatus("warning", "⚠", "This worksheet is not protected.");
+        toggleEl(els.unprotectPasswordSection, false);
+        return;
+      }
 
       try {
+        // Pass the password (may be empty string — Excel handles both cases)
         sheet.protection.unprotect(password);
         await context.sync();
       } catch (_) {
+        // Excel rejected the password
         showStatus("error", "✕", "Incorrect password. Please try again.");
+        els.unprotectPasswordInput.select();
         return;
       }
 
